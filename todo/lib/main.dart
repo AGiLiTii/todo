@@ -1,4 +1,3 @@
-import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -14,7 +13,7 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => MyAppState(),
       child: MaterialApp(
-        title: 'Namer App',
+        title: 'TODO App',
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
@@ -25,26 +24,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MyAppState extends ChangeNotifier {
-  var current = WordPair.random();
-
-  void next() {
-    current = WordPair.random();
-    notifyListeners();
-  }
-
-  // Favourites
-  var fav = <WordPair>[];
-
-  void toggleFavourite() {
-    if (fav.contains(current)) {
-      fav.remove(current);
-    } else {
-      fav.add(current);
-    }
-    notifyListeners();
-  }
-}
+class MyAppState extends ChangeNotifier {}
 
 class MyHomePage extends StatefulWidget {
   @override
@@ -59,38 +39,40 @@ class _MyHomePageState extends State<MyHomePage> {
     Widget page;
     switch (selectedIndex) {
       case 0:
-        page = Placeholder();
+        page = TodoList();
       case 1:
         page = Placeholder();
       default:
-        throw Exception('Invalid index: $selectedIndex');
+        page = Placeholder();
     }
     return LayoutBuilder(builder: (context, constraints) {
       return Scaffold(
+        appBar: AppBar(
+            backgroundColor: Colors.deepPurpleAccent,
+            title: Text('TODO App',
+                style: Theme.of(context).textTheme.headlineMedium)),
         body: Row(
           children: [
             SafeArea(
-              child: NavigationRail(
-                extended: true,
-                minWidth: constraints.maxWidth / 4,
-                destinations: [
-                  NavigationRailDestination(
-                    icon: Icon(Icons.home),
-                    label: Text('Home',
-                        style: Theme.of(context).textTheme.bodySmall),
-                  ),
-                  NavigationRailDestination(
-                    icon: Icon(Icons.favorite),
-                    label: Text('Favorites',
-                        style: Theme.of(context).textTheme.bodySmall),
-                  ),
-                ],
-                selectedIndex: selectedIndex,
-                onDestinationSelected: (value) {
-                  setState(() {
-                    selectedIndex = value;
-                  });
-                },
+              child: SizedBox(
+                width: constraints.maxWidth / 4,
+                child: ListView(
+                  children: [
+                    for (var i = 0; i <= 5; i++)
+                      ListTile(
+                        title: Text(
+                          'List $i',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        selected: i == selectedIndex,
+                        onTap: () {
+                          setState(() {
+                            selectedIndex = i;
+                          });
+                        },
+                      ),
+                  ],
+                ),
               ),
             ),
             Expanded(
@@ -106,95 +88,23 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-class GeneratorPage extends StatelessWidget {
+class TodoList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    var appState = context.watch<MyAppState>();
-    var pair = appState.current;
-
-    IconData icon;
-    if (appState.fav.contains(pair)) {
-      icon = Icons.favorite;
-    } else {
-      icon = Icons.favorite_border;
-    }
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          BigCard(pair: pair),
-          SizedBox(height: 10),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ElevatedButton.icon(
-                onPressed: () {
-                  appState.toggleFavourite();
-                },
-                icon: Icon(icon),
-                label: Text('Like'),
-              ),
-              SizedBox(width: 10),
-              ElevatedButton(
-                onPressed: () {
-                  appState.next();
-                },
-                child: Text('Next'),
-              ),
-            ],
+    return ListView(
+      children: [
+        for (var i = 0; i < 10; i++)
+          ListTile(
+            // Add leading checkbox
+            leading: Checkbox(
+              value: false,
+              onChanged: (bool? value) {},
+            ),
+            title:
+                // TODO: Recieve actual name
+                Text('Todo $i', style: Theme.of(context).textTheme.bodyMedium),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class FavouritesPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    var appState = context.watch<MyAppState>();
-    var fav = appState.fav;
-
-    if (fav.isEmpty) {
-      return Center(child: Text('No favourites yet'));
-    }
-
-    return ListView(children: [
-      Padding(
-          padding: const EdgeInsets.all(20),
-          child: Text('Favourites:',
-              style: Theme.of(context).textTheme.displaySmall)),
-      for (var pair in fav)
-        ListTile(
-          leading: Icon(Icons.favorite),
-          title: Text(pair.asLowerCase,
-              style: Theme.of(context).textTheme.bodyMedium),
-        ),
-    ]);
-  }
-}
-
-class BigCard extends StatelessWidget {
-  const BigCard({
-    super.key,
-    required this.pair,
-  });
-
-  final WordPair pair;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final style = theme.textTheme.displayMedium!.copyWith(
-      color: theme.colorScheme.onPrimary,
-    );
-    return Card(
-      color: theme.colorScheme.primary,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Text(pair.asLowerCase, style: style),
-      ),
+      ],
     );
   }
 }
