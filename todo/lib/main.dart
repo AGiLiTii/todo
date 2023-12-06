@@ -59,9 +59,9 @@ class _MyHomePageState extends State<MyHomePage> {
     Widget page;
     switch (selectedIndex) {
       case 0:
-        page = GeneratorPage();
+        page = Placeholder();
       case 1:
-        page = FavouritesPage();
+        page = Placeholder();
       default:
         throw Exception('Invalid index: $selectedIndex');
     }
@@ -71,15 +71,18 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             SafeArea(
               child: NavigationRail(
-                extended: constraints.maxWidth >= 600,
+                extended: true,
+                minWidth: constraints.maxWidth / 4,
                 destinations: [
                   NavigationRailDestination(
                     icon: Icon(Icons.home),
-                    label: Text('Home'),
+                    label: Text('Home',
+                        style: Theme.of(context).textTheme.bodySmall),
                   ),
                   NavigationRailDestination(
                     icon: Icon(Icons.favorite),
-                    label: Text('Favorites'),
+                    label: Text('Favorites',
+                        style: Theme.of(context).textTheme.bodySmall),
                   ),
                 ],
                 selectedIndex: selectedIndex,
