@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => MyAppState(),
       child: MaterialApp(
-        title: 'TODO App',
+        title: 'WhatNext?',
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
@@ -26,6 +26,9 @@ class MyApp extends StatelessWidget {
 
 class MyAppState extends ChangeNotifier {
   // item Count that can change
+
+  // TODO: Map listitems to todoitems
+
   List todoItems = [];
   List listItems = [];
 
@@ -40,7 +43,7 @@ class MyAppState extends ChangeNotifier {
 // Add list
   void addList(String name) {
     if (listItems.length <= 12) {
-      listItems.add(TodoItem(name: name));
+      listItems.add(ListItem(name: name));
     }
     notifyListeners();
   }
@@ -60,32 +63,48 @@ class TodoItem {
   TodoItem({required this.name});
 }
 
+class ListItem {
+  final String name;
+
+  ListItem({required this.name});
+}
+
 class MyHomePage extends StatefulWidget {
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  late List<TodoList> todoLists;
   var selectedIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+    todoLists = List.generate(12, (index) => TodoList());
+  }
+
+  @override
   Widget build(BuildContext context) {
-    Widget page;
-    switch (selectedIndex) {
-      case 0:
-        page = TodoList();
-      case 1:
-        page = ListPage();
-      default:
-        page = Placeholder();
-    }
+    var appState = context.watch<MyAppState>();
+
+    // Get selected todolist
+    TodoList selectedList = todoLists[selectedIndex];
 
     return LayoutBuilder(builder: (context, constraints) {
       return Scaffold(
-        floatingActionButton: AddButton(),
+        floatingActionButton: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            AddButton(),
+            SizedBox(height: 16),
+            AddListButton(), // New list button
+          ],
+        ),
         appBar: AppBar(
           backgroundColor: Colors.deepPurpleAccent,
-          title: Text('TODO App',
+          title: Text('WhatNext?',
               style: Theme.of(context).textTheme.headlineMedium),
         ),
         body: Row(
@@ -93,29 +112,27 @@ class _MyHomePageState extends State<MyHomePage> {
             SafeArea(
               child: SizedBox(
                 width: constraints.maxWidth / 4,
-                child: ListView(
-                  children: [
-                    for (var i = 0; i <= 5; i++)
-                      ListTile(
-                        title: Text(
-                          'List $i',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                        selected: i == selectedIndex,
-                        onTap: () {
-                          setState(() {
-                            selectedIndex = i;
-                          });
-                        },
-                      ),
-                  ],
+                child: ListView.builder(
+                  itemCount: appState.listItems.length,
+                  itemBuilder: (context, index) => ListTile(
+                    title: Text(
+                      appState.listItems[index].name,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    onTap: () {
+                      setState(() {
+                        selectedIndex = index;
+                        print(selectedIndex);
+                      });
+                    },
+                  ),
                 ),
               ),
             ),
             Expanded(
               child: Container(
                 color: Theme.of(context).colorScheme.primaryContainer,
-                child: page,
+                child: selectedList,
               ),
             ),
           ],
@@ -127,6 +144,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
 // Todolist
 class TodoList extends StatefulWidget {
+  //TODO: each list has own
+
   @override
   State<TodoList> createState() => _TodoListState();
 }
@@ -154,6 +173,55 @@ class _TodoListState extends State<TodoList> {
 }
 
 //TODO: Add list button
+
+// New list button
+class AddListButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return FloatingActionButton(
+      onPressed: () {
+        _showAddListDialog(context);
+      },
+      child: Icon(Icons.playlist_add),
+    );
+  }
+}
+
+void _showAddListDialog(BuildContext context) {
+  TextEditingController textController = TextEditingController();
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Add List'),
+        content: TextField(
+          controller: textController,
+          decoration: InputDecoration(labelText: 'Enter List name'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close the dialog
+            },
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              String listName = textController.text;
+              if (listName.isNotEmpty) {
+                Provider.of<MyAppState>(context, listen: false)
+                    .addList(listName);
+                Navigator.of(context).pop(); // Close the dialog
+              }
+            },
+            child: Text('Add'),
+          ),
+        ],
+      );
+    },
+  );
+}
 
 class ListPage extends StatelessWidget {
   @override
@@ -199,7 +267,6 @@ class AddButton extends StatelessWidget {
               onPressed: () {
                 String todoName = textController.text;
                 if (todoName.isNotEmpty) {
-                  // Add the TODO with the specified name
                   Provider.of<MyAppState>(context, listen: false)
                       .addTodo(todoName);
                   Navigator.of(context).pop(); // Close the dialog
